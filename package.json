@@ -1,10 +1,10 @@
 {
-  "name" : "rsa",
-  "version" : "v0.0.3",
+  "name" : "nrsa",
+  "version" : "v0.0.4",
   "description" : "OpenSSL's RSA encrypt/decrypt routines",
   "keywords" : ["openssl", "crypto", "rsa"],
-  "homepage" : "https://github.com/chrisa/node-rsa#readme",
-  "author" : { "name" : "Chris Andrews", "email": "chris@nodnol.org" },
+  "homepage" : "https://github.com/katyo/node-rsa#readme",
+  "author" : { "name" : "Chris Andrews, Eric Laberge, Kayo Phoenix", "email": "chris@nodnol.org" },
   "files" : [ "LICENCE",
               "README.md",
               "test/test.js",
@@ -14,9 +14,9 @@
               "node_rsa.cc",
               "node_rsa.h",
               "rsa.js"
-             ],
+            ],
   "main" : "./rsa.js",
-  "repository" : { "type" : "git", "url" : "http://github.com/chrisa/node-rsa.git" },
+  "repository" : { "type" : "git", "url" : "http://github.com/katyo/node-rsa.git" },
   "scripts": { "install": "node-waf configure build" },
   "engines" : { "node" : "0.4 || 0.5 || 0.6" }
 }
