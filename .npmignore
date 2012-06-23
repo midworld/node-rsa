@@ -1,0 +1,5 @@
+.git
+.gitignore
+.lock-wscript
+build
+rsaBinding.node
