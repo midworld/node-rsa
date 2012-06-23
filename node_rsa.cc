@@ -20,69 +20,6 @@ namespace node {
 
 using namespace v8;
 
-// hex_encode, hex_decode, base64, unbase64 nicked from node_crypto.cc
-
-void hex_encode(unsigned char *md_value, int md_len, char** md_hexdigest,
-                int* md_hex_len) {
-  *md_hex_len = (2*(md_len));
-  *md_hexdigest = (char *) malloc(*md_hex_len + 1);
-  for (int i = 0; i < md_len; i++) {
-    sprintf((char *)(*md_hexdigest + (i*2)), "%02x",  md_value[i]);
-  }
-}
-
-#define hex2i(c) ((c) <= '9' ? ((c) - '0') : (c) <= 'Z' ? ((c) - 'A' + 10) \
-                 : ((c) - 'a' + 10))
-void hex_decode(unsigned char *input, int length, char** buf64, 
-                int* buf64_len) {
-  *buf64_len = (length/2);
-  *buf64 = (char*) malloc(length/2 + 1);
-  char *b = *buf64;
-  for(int i = 0; i < length-1; i+=2) {
-    b[i/2]  = (hex2i(input[i])<<4) | (hex2i(input[i+1]));
-  }
-}
-
-void base64(unsigned char *input, int length, char** buf64, int* buf64_len)
-{
-  BIO *bmem, *b64;
-  BUF_MEM *bptr;
-
-  b64 = BIO_new(BIO_f_base64());
-  bmem = BIO_new(BIO_s_mem());
-  b64 = BIO_push(b64, bmem);
-  BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-  BIO_write(b64, input, length);
-  (void)BIO_flush(b64);
-  BIO_get_mem_ptr(b64, &bptr);
-
-  *buf64_len = bptr->length;
-  *buf64 = (char *)malloc(*buf64_len+1);
-  memcpy(*buf64, bptr->data, bptr->length);
-  char* b = *buf64;
-  b[bptr->length] = 0;
-
-  BIO_free_all(b64);
-
-}
-
-void unbase64(unsigned char *input, int length, char** buffer, int* buffer_len)
-{
-  BIO *b64, *bmem;
-  *buffer = (char *)malloc(length);
-  memset(*buffer, 0, length);
-
-  b64 = BIO_new(BIO_f_base64());
-  BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-  bmem = BIO_new_mem_buf(input, length);
-  bmem = BIO_push(b64, bmem);
-
-  *buffer_len = BIO_read(bmem, *buffer, length);
-  BIO_free_all(bmem);
-}
-
-
-
 void RsaKeypair::Initialize(Handle<Object> target) {
   HandleScope scope;
 
@@ -223,7 +160,7 @@ Handle<Value> RsaKeypair::Encrypt(const Arguments& args) {
     Local<Value> exception = Exception::Error(String::New("Can't encrypt, no public key"));
     return ThrowException(exception);
   }
-
+  
   enum encoding enc = ParseEncoding(args[1]);
   ssize_t len = DecodeBytes(args[0], enc);
   
@@ -244,8 +181,8 @@ Handle<Value> RsaKeypair::Encrypt(const Arguments& args) {
   }
   
   // check per RSA_public_encrypt(3) when using padding modes
-  if (len >= RSA_size(kp->publicKey) - paddingLength) {
-  char *temp = new char[128];
+  if (len > RSA_size(kp->publicKey) - paddingLength) {
+    char *temp = new char[128];
     Local<Value> exception = Exception::TypeError(String::New("Bad argument (too long for key size)"));
     return ThrowException(exception);
   }
@@ -271,29 +208,7 @@ Handle<Value> RsaKeypair::Encrypt(const Arguments& args) {
     outString = String::New("");
   }
   else {
-    if (args.Length() <= 2 || !args[2]->IsString()) {
-      outString = Encode(out, out_len, BINARY);
-    } else {
-      char* out_hexdigest;
-      int out_hex_len;
-      String::Utf8Value encoding(args[2]->ToString());
-      if (strcasecmp(*encoding, "hex") == 0) {
-	hex_encode(out, out_len, &out_hexdigest, &out_hex_len);
-	outString = Encode(out_hexdigest, out_hex_len, BINARY);
-	free(out_hexdigest);
-      } else if (strcasecmp(*encoding, "base64") == 0) {
-        base64(out, out_len, &out_hexdigest, &out_hex_len);
-        outString = Encode(out_hexdigest, out_hex_len, BINARY);
-        free(out_hexdigest);
-      } else if (strcasecmp(*encoding, "binary") == 0) {
-        outString = Encode(out, out_len, BINARY);
-      } else {
-	outString = String::New("");
-	Local<Value> exception = Exception::Error(String::New("RsaKeypair.encrypt encoding "
-							      "can be binary, base64 or hex"));
-	return ThrowException(exception);
-      }
-    }
+    outString = Encode(out, out_len, BINARY);
   }
   if (out) free(out);
   return scope.Close(outString);
@@ -314,30 +229,7 @@ Handle<Value> RsaKeypair::Decrypt(const Arguments& args) {
   (void)DecodeWrite((char *)buf, len, args[0], BINARY);
   unsigned char* ciphertext;
   int ciphertext_len;
-
-  if (args.Length() <= 1 || !args[1]->IsString()) {
-      // Binary - do nothing
-  } else {
-    String::Utf8Value encoding(args[1]->ToString());
-    if (strcasecmp(*encoding, "hex") == 0) {
-      hex_decode((unsigned char*)buf, len, (char **)&ciphertext, &ciphertext_len);
-      free(buf);
-      buf = ciphertext;
-      len = ciphertext_len;
-    } else if (strcasecmp(*encoding, "base64") == 0) {
-      unbase64((unsigned char*)buf, len, (char **)&ciphertext, &ciphertext_len);
-      free(buf);
-      buf = ciphertext;
-      len = ciphertext_len;
-    } else if (strcasecmp(*encoding, "binary") == 0) {
-      // Binary - do nothing
-    } else {
-      Local<Value> exception = Exception::Error(String::New("RsaKeypair.decrypt encoding "
-							    "can be binary, base64 or hex"));
-      return ThrowException(exception);
-    }
-  }
-
+  
   // XXX is this check unnecessary? is it just len <= keysize?
   // check per RSA_public_encrypt(3) when using OAEP
   //if (len > RSA_size(kp->privateKey) - 41) {
@@ -399,28 +291,8 @@ Handle<Value> RsaKeypair::GetBignum(const Arguments& args, WhichComponent which)
   Local<Value> outString;
   if (out_len == 0) {
     outString = String::New("");
-  } else if (args.Length() <= 0 || !args[0]->IsString()) {
-    outString = Encode(out, out_len, BINARY);
   } else {
-    char* out_hexdigest;
-    int out_hex_len;
-    String::Utf8Value encoding(args[0]->ToString());
-    if (strcasecmp(*encoding, "hex") == 0) {
-      hex_encode(out, out_len, &out_hexdigest, &out_hex_len);
-      outString = Encode(out_hexdigest, out_hex_len, BINARY);
-      free(out_hexdigest);
-    } else if (strcasecmp(*encoding, "base64") == 0) {
-      base64(out, out_len, &out_hexdigest, &out_hex_len);
-      outString = Encode(out_hexdigest, out_hex_len, BINARY);
-      free(out_hexdigest);
-    } else if (strcasecmp(*encoding, "binary") == 0) {
-      outString = Encode(out, out_len, BINARY);
-    } else {
-      outString = String::New("");
-      Local<Value> exception = Exception::Error(String::New("RsaKeypair.get* encoding "
-							    "can be binary, base64 or hex"));
-      return ThrowException(exception);
-    }
+    outString = Encode(out, out_len, BINARY);
   }
 
   if (out) free(out);
