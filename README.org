@@ -3,8 +3,8 @@
   Support is limited to encryption with a public key, decryption with a private key.
   Implementation uses OpenSSL RSA keys encoded by using ASN.1 and Base64.
 ** Implementation Notes
-  + This module was originally implemented by Chris Andrews.
-  + Configurable padding feature was implemented by Eric Laberge.
+  + This module was originally implemented by [[http://github.com/chrisa/node-rsa][Chris Andrews]].
+  + Configurable padding feature was implemented by [[http://github.com/elaberge/node-rsa][Eric Laberge]].
   + Katyo was found what native encoding feature has bugs, so base64 throws a segmentation fault.
     Therefore native encoding feature was replaced by implementation which uses NodeJS Buffer object for this purpose.
 ** Installation
@@ -16,18 +16,18 @@
 *** Initialization
   + Automated
     : var options = {
-    :   publicKey: "RSA Public Key Data",
+    :   publicKey: "RSA Public Key Data (for encryption only)",
     :   privateKey: "RSA Private Key Data",
     :   passphrase: "RSA Private Key Passphrase (optional)",
-    :   padding: "RSA Encription Padding"
+    :   padding: "RSA Encription Padding (oaep by default)"
     : };
     : var keypair = RSA.createRsaKeypair(options);
 
   + Manual
     : var keypair = new RSA.RsaKeypair();
-    : keypair.setPublicKey("RSA Public Key Data");
+    : keypair.setPublicKey("RSA Public Key Data (for encryption only)");
     : keypair.setPrivateKey("RSA Private Key Data", "RSA Private Key Passphrase (optional)");
-    : keypair.setPadding("RSA Encription Padding");
+    : keypair.setPadding("RSA Encription Padding (oaep by default)");
 *** Application
   + Encryption
     : var encrypted = keypair.encrypt("source data", "source encoding", "encrypted encoding");
