@@ -22,16 +22,19 @@
     :   padding: "RSA Encription Padding"
     : };
     : var keypair = RSA.createRsaKeypair(options);
+
   + Manual
     : var keypair = new RSA.RsaKeypair();
     : keypair.setPublicKey("RSA Public Key Data");
     : keypair.setPrivateKey("RSA Private Key Data", "RSA Private Key Passphrase (optional)");
-    : keypair.setPadding("RSA Encription Padding");    
+    : keypair.setPadding("RSA Encription Padding");
 *** Application
   + Encryption
     : var encrypted = keypair.encrypt("source data", "source encoding", "encrypted encoding");
+
   + Decryption
     : var decrypted = keypair.decrypt("encrypted data", "encrypted encoding", "decrypted encoding");
+
   See test/test.js and test/getters.js.
 ** Description
 *** Padding
