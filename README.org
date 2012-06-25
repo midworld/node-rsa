@@ -1,0 +1,51 @@
+* Node RSA
+  This module provides access to RSA public-key routines from OpenSSL.
+  Support is limited to encryption with a public key, decryption with a private key.
+  Implementation uses OpenSSL RSA keys encoded by using ASN.1 and Base64.
+** Implementation Notes
+  + This module was originally implemented by Chris Andrews.
+  + Configurable padding feature was implemented by Eric Laberge.
+  + Katyo was found what native encoding feature has bugs, so base64 throws a segmentation fault.
+    Therefore native encoding feature was replaced by implementation which uses NodeJS Buffer object for this purpose.
+** Installation
+   /By using NPM it's simply:/
+   : npm install nrsa
+** Usage
+*** Importing
+    : var RSA = require('nrsa');
+*** Initialization
+  + Automated
+    : var options = {
+    :   publicKey: "RSA Public Key Data",
+    :   privateKey: "RSA Private Key Data",
+    :   passphrase: "RSA Private Key Passphrase (optional)",
+    :   padding: "RSA Encription Padding"
+    : };
+    : var keypair = RSA.createRsaKeypair(options);
+  + Manual
+    : var keypair = new RSA.RsaKeypair();
+    : keypair.setPublicKey("RSA Public Key Data");
+    : keypair.setPrivateKey("RSA Private Key Data", "RSA Private Key Passphrase (optional)");
+    : keypair.setPadding("RSA Encription Padding");    
+*** Application
+  + Encryption
+    : var encrypted = keypair.encrypt("source data", "source encoding", "encrypted encoding");
+  + Decryption
+    : var decrypted = keypair.decrypt("encrypted data", "encrypted encoding", "decrypted encoding");
+  See test/test.js and test/getters.js.
+** Description
+*** Padding
+    Next OpenSSL paddings supported:
+    | Padding | OpenSSL constant       |
+    |---------+------------------------|
+    | oaep    | RSA_PKCS1_OAEP_PADDING |
+    | pkcs1   | RSA_PKCS1_PADDING      |
+    | sslv23  | RSA_SSLV23_PADDING     |
+    | none    | RSA_NO_PADDING         |
+    *Note: RSA Encryption without padding insecure.*
+*** Keys
+    Keys must be in PEM format (ASN.1 and Base64 encoded).
+** Node Versions
+   This module should work on both Node.js 0.4.x and 0.6.x.
+** Licence
+   BSD, see LICENCE.
