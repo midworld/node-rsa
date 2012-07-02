@@ -1,6 +1,6 @@
 import Options, Utils, sys
 from shutil import copy, rmtree
-from os import unlink, popen
+from os import unlink, popen, symlink
 from os.path import exists, islink
 
 srcdir = '.'
