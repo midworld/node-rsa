@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-NODE_PREFIX=debian/node-nrsa/usr
-
 %:
 	dh $@
 
@@ -15,7 +13,8 @@ override_dh_auto_test:
 	nodejs test/test.js
 
 override_dh_auto_install:
-	cp build/Release/rsaBinding.node rsa.js package.json $(NODE_PREFIX)/lib/nodejs/nrsa
+	dh_install
+	dh_buildinfo
 	echo "misc:Depends=$$(dpkg-query --showformat='$${Package} (= $${Version})' --show nodejs)" > debian/node-nrsa.substvars
 
 override_dh_auto_clean:
