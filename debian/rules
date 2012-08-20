@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+NODE_PREFIX=debian/node-nrsa/usr
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	node-waf configure
+
+override_dh_auto_build:
+	node-waf build
+
+override_dh_auto_test:
+	nodejs test/test.js
+
+override_dh_auto_install:
+	cp build/Release/rsaBinding.node rsa.js package.json $(NODE_PREFIX)/lib/nodejs/nrsa
+	echo "misc:Depends=$$(dpkg-query --showformat='$${Package} (= $${Version})' --show nodejs)" > debian/node-nrsa.substvars
+
+override_dh_auto_clean:
+	node-waf distclean
+	rm -f rsaBinding.node
