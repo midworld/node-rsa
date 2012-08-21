@@ -42,6 +42,12 @@
     : var decrypted = keypair.decrypt("encrypted data", "encrypted encoding", "decrypted encoding");
 
   See test/test.js and test/getters.js.
+*** How to Make RSA Key
+  + Private Key
+    : openssl genrsa -des -out private.pem 2048
+
+  + Public key
+    : openssl rsa -pubout < private.pem > public.pem
 ** Description
 *** Padding
     Next OpenSSL paddings supported:
