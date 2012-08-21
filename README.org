@@ -7,12 +7,18 @@
   + Configurable padding feature was implemented by [[http://github.com/elaberge/node-rsa][Eric Laberge]].
   + Katyo was found what native encoding feature has bugs, so base64 throws a segmentation fault.
     Therefore native encoding feature was replaced by implementation which uses NodeJS Buffer object for this purpose.
+  + Support node-gyp build on Windows.
+** Building on Windows
+  + C++ Compiler(such as MSVC), Python2.x required.
+  + and node-gyp.
+    : npm install node-gyp -g
+
+  + You should take care of %PATH% and %PYTHON%.
 ** Installation
-   /By using NPM it's simply:/
-   : npm install nrsa
+   : npm install git+https://github.com/midworld/node-rsa.git
 ** Usage
 *** Importing
-    : var RSA = require('nrsa');
+    : var RSA = require('rsa');
 *** Initialization
   + Automated
     : var options = {
@@ -49,6 +55,6 @@
 *** Keys
     Keys must be in PEM format (ASN.1 and Base64 encoded).
 ** Node Versions
-   This module should work on both Node.js 0.4.x and 0.6.x.
+   This module should work on Node.js 0.8.x with node-gyp.
 ** Licence
    BSD, see LICENCE.
