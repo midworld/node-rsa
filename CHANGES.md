@@ -1,5 +1,10 @@
 node-rsa - Changes
 ==================
+ * 0.0.6:
+   Support non-blocking encrypt/decrypt functions and node-gyp building (Midworld Kim <powring@gmail.com>)
+
+ * 0.0.5:
+   Native encoding feature replace by NodeJS Buffer object (Kayo Phoenix <kayo@illumium.org>)
 
  * 0.0.x:
    Added support for different padding modes (Eric Laberge <e.laberge@gmail.com>)

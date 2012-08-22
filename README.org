@@ -8,9 +8,9 @@
   + [[https://github.com/katyo/node-rsa][Katyo]] was found what native encoding feature has bugs, so base64 throws a segmentation fault.
     Therefore native encoding feature was replaced by implementation which uses NodeJS Buffer object for this purpose.
   + Support node-gyp build on Windows.
-  + Support non-blocking encrypt/decrypt functions by [[https://github.com/midworld/node-rsa][Midworld Kim]]
+  + Support non-blocking encrypt/decrypt functions by [[https://github.com/midworld/node-rsa][Midworld Kim]].
 ** Building on Windows
-  + C++ Compiler(such as MSVC), Python2.x required.
+  + C++ Compiler(such as MSVC), Python2.7 required.
   + and node-gyp.
     : npm install node-gyp -g
 
