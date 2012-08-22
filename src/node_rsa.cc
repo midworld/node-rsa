@@ -204,10 +204,8 @@ Handle<Value> RsaKeypair::EncryptSync(const Arguments& args) {
   int out_len = RSA_size(kp->publicKey);
   unsigned char *out = (unsigned char*)malloc(out_len);
 
-  uv_mutex_lock(&kp->mutex);
   int r = RSA_public_encrypt(len, buf, out, kp->publicKey, kp->padding);
-  uv_mutex_unlock(&kp->mutex);
-
+  
   delete[] buf;
 
   if (r < 0) {
@@ -294,7 +292,8 @@ Handle<Value> RsaKeypair::Encrypt(const Arguments& args) {
   Baton* baton = new Baton();
   baton->reqeust.data = baton;
   baton->callback = Persistent<Function>::New(callback);
-  baton->keyPair = kp;
+  baton->key = RSAPublicKey_dup(kp->publicKey);
+  baton->padding = kp->padding;
   baton->buf = buf;
   baton->len = len;
   baton->mode = Baton::MODE_ENCRYPT;
@@ -330,10 +329,8 @@ Handle<Value> RsaKeypair::DecryptSync(const Arguments& args) {
   int out_len = RSA_size(kp->privateKey);
   unsigned char *out = (unsigned char*)malloc(out_len);
   
-  uv_mutex_lock(&kp->mutex);
   out_len = RSA_private_decrypt(len, buf, out, kp->privateKey, kp->padding);
-  uv_mutex_unlock(&kp->mutex);
-
+  
   if (out_len < 0) {
     if (out) free(out);
     delete[] buf;
@@ -383,7 +380,8 @@ Handle<Value> RsaKeypair::Decrypt(const Arguments& args) {
   Baton* baton = new Baton();
   baton->reqeust.data = baton;
   baton->callback = Persistent<Function>::New(callback);
-  baton->keyPair = kp;
+  baton->key = RSAPrivateKey_dup(kp->privateKey);
+  baton->padding = kp->padding;
   baton->buf = buf;
   baton->len = len;
   baton->mode = Baton::MODE_DECRYPT;
@@ -467,24 +465,18 @@ void RsaKeypair::AsyncWork(uv_work_t* req) {
   Baton* baton = static_cast<Baton*>(req->data);
 
   if (baton->mode == Baton::MODE_ENCRYPT) {
-    int out_len = RSA_size(baton->keyPair->publicKey);
+    int out_len = RSA_size(baton->key);
     unsigned char* out = (unsigned char*)malloc(out_len);
     
-    uv_mutex_lock(&baton->keyPair->mutex);
-    baton->r = RSA_public_encrypt(baton->len, baton->buf, out, baton->keyPair->publicKey, baton->keyPair->padding);
-    uv_mutex_unlock(&baton->keyPair->mutex);
-
+    baton->r = RSA_public_encrypt(baton->len, baton->buf, out, baton->key, baton->padding);
     baton->out = out;
     baton->out_len = out_len;
   }
   else if (baton->mode == Baton::MODE_DECRYPT) {
-    int out_len = RSA_size(baton->keyPair->privateKey);
+    int out_len = RSA_size(baton->key);
     unsigned char *out = (unsigned char*)malloc(out_len);
 
-    uv_mutex_lock(&baton->keyPair->mutex);
-    out_len = RSA_private_decrypt(baton->len, baton->buf, out, baton->keyPair->privateKey, baton->keyPair->padding);
-    uv_mutex_unlock(&baton->keyPair->mutex);
-
+    out_len = RSA_private_decrypt(baton->len, baton->buf, out, baton->key, baton->padding);
     baton->out = out;
     baton->out_len = out_len;
 
@@ -524,21 +516,6 @@ void RsaKeypair::AsyncAfter(uv_work_t* req) {
       argv[0] = Local<Value>::New(Null());
       argv[1] = outString;
     }
-
-    // callback
-    TryCatch try_catch;
-
-    baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
-
-    if (try_catch.HasCaught()) {
-      FatalException(try_catch);
-    }
-
-    if (baton->out) free(baton->out);
-    delete[] baton->buf;
-    baton->callback.Dispose();
-    
-    delete baton;
   }
   else if (baton->mode == Baton::MODE_DECRYPT) {
     if (baton->out_len < 0) {
@@ -560,25 +537,26 @@ void RsaKeypair::AsyncAfter(uv_work_t* req) {
       argv[0] = Local<Value>::New(Null());
       argv[1] = outString;
     }
-
-    // callback
-    TryCatch try_catch;
-
-    baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
-
-    if (try_catch.HasCaught()) {
-      FatalException(try_catch);
-    }
-
-    if (baton->out) free(baton->out);
-    delete[] baton->buf;
-    baton->callback.Dispose();
-    
-    delete baton;
   }
   else {
     assert(false && "mode corrupted");
   }
+
+  // callback
+  TryCatch try_catch;
+
+  baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+
+  if (try_catch.HasCaught()) {
+    FatalException(try_catch);
+  }
+
+  RSA_free(baton->key);
+  if (baton->out) free(baton->out);
+  delete[] baton->buf;
+  baton->callback.Dispose();
+    
+  delete baton;
 }
 
 // avoid link error...

@@ -40,11 +40,11 @@ class RsaKeypair : ObjectWrap {
   static v8::Handle<v8::Value> GetBignum(const v8::Arguments& args, WhichComponent which);
 
   RsaKeypair() : ObjectWrap() {
-    uv_mutex_init(&mutex);
   }
 
   ~RsaKeypair() {
-    uv_mutex_destroy(&mutex);
+    if (publicKey != NULL) RSA_free(publicKey);
+    if (privateKey != NULL) RSA_free(privateKey);
   }
 
  private:
@@ -52,13 +52,13 @@ class RsaKeypair : ObjectWrap {
   RSA* privateKey;
   int padding;
 
-  uv_mutex_t mutex;
-
   struct Baton {
     uv_work_t reqeust;
     v8::Persistent<v8::Function> callback;
 
-    RsaKeypair* keyPair;
+    RSA* key;
+    int padding;
+
     unsigned char* buf;
     ssize_t len;
     enum { MODE_ENCRYPT, MODE_DECRYPT } mode;
