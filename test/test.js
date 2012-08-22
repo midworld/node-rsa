@@ -14,6 +14,9 @@ var passphrase = "foobar";
 var params = { publicKey: rsaPublic, privateKey: rsaPrivate, passphrase: passphrase };
 var keypair = rsa.createRsaKeypair(params);
 
+keypair.encrypt = keypair.encryptSync;
+keypair.decrypt = keypair.decryptSync;
+
 // roundtrip via hex encoding
 var ciphertext = keypair.encrypt(plaintext, 'utf8', 'hex');
 var plaintext_again = keypair.decrypt(ciphertext, 'hex', 'utf8');

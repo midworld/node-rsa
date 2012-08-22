@@ -1,6 +1,7 @@
 #include <node.h>
 #include <node_object_wrap.h>
 #include <v8.h>
+#include <string>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -27,6 +28,8 @@ class RsaKeypair : ObjectWrap {
   static v8::Handle<v8::Value> SetPrivateKey(const v8::Arguments& args);
   static v8::Handle<v8::Value> SetPublicKey(const v8::Arguments& args);
   static v8::Handle<v8::Value> SetPadding(const v8::Arguments& args);
+  static v8::Handle<v8::Value> EncryptSync(const v8::Arguments& args);
+  static v8::Handle<v8::Value> DecryptSync(const v8::Arguments& args);
   static v8::Handle<v8::Value> Encrypt(const v8::Arguments& args);
   static v8::Handle<v8::Value> Decrypt(const v8::Arguments& args);
   static v8::Handle<v8::Value> GetModulus(const v8::Arguments& args);
@@ -37,15 +40,37 @@ class RsaKeypair : ObjectWrap {
   static v8::Handle<v8::Value> GetBignum(const v8::Arguments& args, WhichComponent which);
 
   RsaKeypair() : ObjectWrap() {
+    uv_mutex_init(&mutex);
   }
 
   ~RsaKeypair() {
+    uv_mutex_destroy(&mutex);
   }
 
  private:
-  RSA *publicKey;
-  RSA *privateKey;
+  RSA* publicKey;
+  RSA* privateKey;
   int padding;
+
+  uv_mutex_t mutex;
+
+  struct Baton {
+    uv_work_t reqeust;
+    v8::Persistent<v8::Function> callback;
+
+    RsaKeypair* keyPair;
+    unsigned char* buf;
+    ssize_t len;
+    enum { MODE_ENCRYPT, MODE_DECRYPT } mode;
+    enum encoding enc;
+
+    int r;
+    unsigned char* out;
+    int out_len;
+  };
+
+  static void AsyncWork(uv_work_t* req);
+  static void AsyncAfter(uv_work_t* req);
 };
 
 enum encoding MyParseEncoding(v8::Handle<v8::Value> encoding_v,
