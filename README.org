@@ -36,10 +36,14 @@
     : keypair.setPadding("RSA Encription Padding (oaep by default)");
 *** Application
   + Encryption
-    : var encrypted = keypair.encrypt("source data", "source encoding", "encrypted encoding");
+    : var encrypted = keypair.encryptSync("source data", "source encoding", "encrypted encoding");
+    : // or
+    : keypair.encrypt("source data", "source encoding", "encrypted encoding", function (err, encrypted) {});
 
   + Decryption
-    : var decrypted = keypair.decrypt("encrypted data", "encrypted encoding", "decrypted encoding");
+    : var decrypted = keypair.decryptSync("encrypted data", "encrypted encoding", "decrypted encoding");
+    : // or
+    : keypair.decrypt("encrypted data", "encrypted encoding", "decrypted encoding", function (err, decrypted) {});
 
   See test/test.js and test/getters.js.
 *** How to Make RSA Key
