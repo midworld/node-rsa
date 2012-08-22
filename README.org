@@ -5,9 +5,10 @@
 ** Implementation Notes
   + This module was originally implemented by [[http://github.com/chrisa/node-rsa][Chris Andrews]].
   + Configurable padding feature was implemented by [[http://github.com/elaberge/node-rsa][Eric Laberge]].
-  + Katyo was found what native encoding feature has bugs, so base64 throws a segmentation fault.
+  + [[https://github.com/katyo/node-rsa][Katyo]] was found what native encoding feature has bugs, so base64 throws a segmentation fault.
     Therefore native encoding feature was replaced by implementation which uses NodeJS Buffer object for this purpose.
   + Support node-gyp build on Windows.
+  + Support non-blocking encrypt/decrypt functions by [[https://github.com/midworld/node-rsa][Midworld Kim]]
 ** Building on Windows
   + C++ Compiler(such as MSVC), Python2.x required.
   + and node-gyp.
@@ -46,6 +47,14 @@
     : keypair.decrypt("encrypted data", "encrypted encoding", "decrypted encoding", function (err, decrypted) {});
 
   See test/test.js and test/getters.js.
+*** Testing
+  : E:\Work\node-rsa-midworld>node test\test.js
+  : done
+  :
+  : E:\Work\node-rsa-midworld>node test\async-test.js
+  : blocking encrypt/decrypt test(msec): 2610
+  : non-blocking encrypt/decrypt test(msec): 1149 2.27x faster
+
 *** How to Make RSA Key
   + Private Key
     : openssl genrsa -des -out private.pem 2048
